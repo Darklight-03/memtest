@@ -34,7 +34,7 @@ class BlockHeader{
   bool free;
   int size;
   BlockHeader *next;
-  BlockHeader *prev;
+  //BlockHeader *prev;
 };
 
 class LinkedList{
@@ -51,39 +51,21 @@ public:
     }
     else{
       b->next = head;
-      head->prev = b;
       head = b;
     }
 	}
 
 	void remove (BlockHeader* b){  // removes a block from the list
     length--;
-    // if last element simply destroy
-    if(b->next == nullptr&&b->prev == nullptr){
-      head = nullptr;
-      //~b(); //TODO?
-    }
-    else{
-      // if first element simply move
-      if(head == b){
-        head = b->next;
-        head->prev = nullptr;
-        //~b(); //TODO?
+    if(head==b){
+      head = head->next;
+    }else{
+      BlockHeader temp = head;
+      while(temp != b){
+        old = temp;
+        temp = temp.next;
       }
-      else{
-        if(b->next == nullptr){
-          // if last element
-          b->prev->next = nullptr;
-          //~b(); // TODO
-        }
-        else{
-          // otherwise find the previous element then set its next to the next of
-          // deleted before deleting.
-          b->prev->next = b->next;
-          b->next->prev = b->prev;
-          //~b(); //TODO
-        }
-      }
+      old.next = temp.next;
     }
 	}
 };
