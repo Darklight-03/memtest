@@ -29,12 +29,16 @@ int main(int argc, char ** argv) {
     }
   }
   // create memory manager
+  cout<<"Creating allocator"<<endl;
   BuddyAllocator * allocator = new BuddyAllocator(basic_block_size, memory_length);
-
+  cout<<"allocator created!"<<endl;
   // test memory manager
+  cout<<"creating ackerman"<<endl;
   Ackerman* am = new Ackerman ();
+  cout<<"ackerman created!"<<endl;
+  cout<<"testing allocator"<<endl;
   am->test(allocator); // this is the full-fledged test. 
-  
+  cout<<"tested!"<<endl;
   // destroy memory manager
   delete allocator;
 }
