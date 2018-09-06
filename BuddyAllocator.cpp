@@ -119,11 +119,12 @@ char* BuddyAllocator::alloc(uint _length) {
 
 int BuddyAllocator::free(char* _a) {
   /* Same here! */
-  uint size = ((BlockHeader*) _a)->size;
-  free_list.at(getIndex(size))->insert((BlockHeader*) _a);
-  ((BlockHeader*)_a)->free = true;
-  if(((BlockHeader*)getbuddy(_a))->free){
-    merge(_a,getbuddy(_a));
+  char* address = _a-sizeof((BlockHeader*)begin_ptr);
+  uint size = ((BlockHeader*) address)->size;
+  free_list.at(getIndex(size))->insert((BlockHeader*) address);
+  ((BlockHeader*)address)->free = true;
+  if(((BlockHeader*)getbuddy(address))->free){
+    merge(address,getbuddy(address));
   }
   return 0;
 
