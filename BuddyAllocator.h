@@ -13,6 +13,7 @@
 #ifndef _BuddyAllocator_h_                   // include file only once
 #define _BuddyAllocator_h_
 #include <iostream>
+#include <vector>
 using namespace std;
 typedef unsigned int uint;
 
@@ -38,46 +39,50 @@ class BlockHeader{
 
 class LinkedList{
 	// this is a special linked list that is made out of BlockHeader s. 
-private:
-	BlockHeader* head;		// you need a head of the list
 public:
+	BlockHeader* head;		// you need a head of the list
+
+  int length=0;
+
 	void insert (BlockHeader* b){	// adds a block to the front of list
-    if(head==null){
+    length++;
+    if(head==nullptr){
      head = b;
     }
     else{
-      b.next = head;
-      head.prev = b;
+      b->next = head;
+      head->prev = b;
       head = b;
     }
-    return b; 
 	}
 
 	void remove (BlockHeader* b){  // removes a block from the list
+    length--;
     // if last element simply destroy
-    if(b.next == nullptr&&b.prev == nullptr){
+    if(b->next == nullptr&&b->prev == nullptr){
       head = nullptr;
-      ~b(); //TODO?
+      //~b(); //TODO?
     }
     else{
       // if first element simply move
       if(head == b){
-        head = b.next;
-        head.prev = nullptr;
-        ~b(); //TODO?
+        head = b->next;
+        head->prev = nullptr;
+        //~b(); //TODO?
       }
       else{
-        if(b.next == nullptr){
+        if(b->next == nullptr){
           // if last element
-          b.prev.next = nullptr;
-          ~b(); // TODO
+          b->prev->next = nullptr;
+          //~b(); // TODO
         }
         else{
           // otherwise find the previous element then set its next to the next of
           // deleted before deleting.
-          b.prev.next = b.next;
-          b.next.prev = b.prev;
-          ~b(); //TODO
+          b->prev->next = b->next;
+          b->next->prev = b->prev;
+          //~b(); //TODO
+        }
       }
     }
 	}
@@ -87,9 +92,10 @@ public:
 class BuddyAllocator{
 private:
 	/* declare member variables as necessary */
-  int[] free_list;
+  std::vector<LinkedList*> free_list;
   int basic_block_size;
   int total_memory_length;
+  void* begin_ptr;
 
 private:
 	/* private function you are required to implement
@@ -109,10 +115,11 @@ private:
 	// this function merges the two blocks returns the beginning address of the merged block
 	// note that either block1 can be to the left of block2, or the other way around
 
-	char* split (char* block);
+	char* split (char* block, uint size);
 	// splits the given block by putting a new header halfway through the block
 	// also, the original header needs to be corrected
 
+  int getIndex (uint size);  
 
 public:
 	BuddyAllocator (uint _basic_block_size, uint _total_memory_length); 
