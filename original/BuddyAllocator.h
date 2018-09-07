@@ -13,7 +13,6 @@
 #ifndef _BuddyAllocator_h_                   // include file only once
 #define _BuddyAllocator_h_
 #include <iostream>
-#include <vector>
 using namespace std;
 typedef unsigned int uint;
 
@@ -22,73 +21,26 @@ typedef unsigned int uint;
 class BlockHeader{
 	// decide what goes here
 	// hint: obviously block size will go here
-  // bool Free;
-  // int size;
-  // BlockHeader *next
-  //
-  //Header *h = a
-  //h->Free = True;
-  //h->size = 512;
-  //h->next = 0;
-  public:
-  bool free = true;
-  int size = 0;
-  BlockHeader *next = nullptr;
-  //BlockHeader *prev;
 };
 
 class LinkedList{
 	// this is a special linked list that is made out of BlockHeader s. 
+private:
+	BlockHeader* head;		// you need a head of the list
 public:
-	BlockHeader* head = nullptr;		// you need a head of the list
+	void insert (BlockHeader* b){	// adds a block to the list
 
-  int length=0;
-
-	void insert (BlockHeader* b){	// adds a block to the front of list
-    if(b==nullptr){
-      cout<<"NULL CANNOT GO IN LIST PLS"<<endl;
-      return;
-    }
-    length++;
-    if(head==nullptr){
-      b->next = nullptr;
-      head = b;
-    }
-    else{
-      b->next = head;
-      head = b;
-    }
 	}
 
 	void remove (BlockHeader* b){  // removes a block from the list
-    if(head==nullptr){
-      return;
-    }
-    BlockHeader* elem = head;
-    BlockHeader* next = head->next;
-    if(head == b){
-      head = head->next;
-      length--;
-      return;
-    }
-    while(elem != nullptr){
-      if(next == b){
-         elem->next = next->next;
-         length--;
-         return;
-      }
-	  }
-  }
+
+	}
 };
 
 
 class BuddyAllocator{
 private:
 	/* declare member variables as necessary */
-  std::vector<LinkedList*> free_list;
-  int basic_block_size;
-  int total_memory_length;
-  void* begin_ptr;
 
 private:
 	/* private function you are required to implement
@@ -108,11 +60,10 @@ private:
 	// this function merges the two blocks returns the beginning address of the merged block
 	// note that either block1 can be to the left of block2, or the other way around
 
-	char* split (char* block, uint size);
+	char* split (char* block);
 	// splits the given block by putting a new header halfway through the block
 	// also, the original header needs to be corrected
 
-  int getIndex (uint size);  
 
 public:
 	BuddyAllocator (uint _basic_block_size, uint _total_memory_length); 

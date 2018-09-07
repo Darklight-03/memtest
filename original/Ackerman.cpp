@@ -69,8 +69,7 @@ void Ackerman::test(BuddyAllocator *_ba) {
     
     cout<<"Ackerman("<<n<<", "<<m<<"): "<<result<<endl; 
     cout<<"Time taken: "<< get_time_diff(&tp_start, &tp_end) << endl;
-    cout<<"Number of allocate/free cycles: "<<this->num_allocations<<endl<<endl;
-    ba->debug(); 
+    cout<<"Number of allocate/free cycles: "<<this->num_allocations<<endl<<endl; 
   }
 }
 

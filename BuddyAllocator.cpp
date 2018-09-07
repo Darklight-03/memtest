@@ -37,12 +37,13 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
   // put the main block at max size list
   ((BlockHeader*)total_block)->free = true;
   ((BlockHeader*)total_block)->size = total_memory_length;
+  ((BlockHeader*)total_block)->next = nullptr;
   free_list.at(count-1)->insert((BlockHeader*)total_block);
   
 }
 
 BuddyAllocator::~BuddyAllocator (){
-	
+  free ((char*)begin_ptr);  
 }
 
 int BuddyAllocator::getIndex(uint size){
@@ -70,42 +71,41 @@ char* BuddyAllocator::alloc(uint _length) {
   */
 
   // find needed block size
-  int count = 0;
   uint size = nextPowerOfTwo(_length);
   if(size < basic_block_size){
     size = basic_block_size;
   }
-  else{
-    uint temp = basic_block_size;
-    while(temp < size+sizeof((BlockHeader*)begin_ptr)){
-      temp = temp << 1;
-      count++;
-    }
-    if(temp > total_memory_length){
-      return 0;
-    }
-    size = temp;
-  }    
-  BlockHeader *memory = free_list.at(count)->head;
+
+  uint temp = basic_block_size;
+  while(temp < size+sizeof((BlockHeader*)begin_ptr)){
+    temp = temp << 1;
+  }
+  if(temp > total_memory_length){
+    return 0;
+  }
+  size = temp;
+  BlockHeader *memory = free_list.at(getIndex(size))->head;
 
   // if there is already a correctly sized block available just return it and
   // remove it
   if(memory != nullptr){
-    free_list.at(count)->remove(memory);
     memory->free = false;
-    return (char*)(memory+sizeof(memory));
+    free_list.at(getIndex(size))->remove(memory);
+    return (char*)(((char*)(memory))+sizeof((BlockHeader*)(memory)));
   }else{
 
     // if there is not a block, look for the smallest available block larger
     // than it, then split the new block into the correct sized block and
     // return it
+    int count = getIndex(size);
     while(basic_block_size << count <= total_memory_length){
       memory = free_list.at(count)->head;
       if(memory != nullptr){
-        free_list.at(count)->remove(memory);
-        memory->free = false;
+        //free_list.at(count)->remove(memory);
         memory = (BlockHeader*) split((char*)memory,size);
-        return (char*)(memory+sizeof((BlockHeader*)memory));
+        memory -> free = false;
+        free_list.at(getIndex(memory->size))->remove(memory);
+        return (char*)(((char*)(memory))+sizeof((BlockHeader*)memory));
       }
       count++;
     }
@@ -119,12 +119,17 @@ char* BuddyAllocator::alloc(uint _length) {
 
 int BuddyAllocator::free(char* _a) {
   /* Same here! */
+  //get address of blockheader to be freed
   char* address = _a-sizeof((BlockHeader*)begin_ptr);
+
   uint size = ((BlockHeader*) address)->size;
   free_list.at(getIndex(size))->insert((BlockHeader*) address);
   ((BlockHeader*)address)->free = true;
   if(((BlockHeader*)getbuddy(address))->free){
     merge(address,getbuddy(address));
+  }
+  else{
+    int i;
   }
   return 0;
 
@@ -134,14 +139,14 @@ int BuddyAllocator::free(char* _a) {
 
 void BuddyAllocator::debug (){
   for(int i = 0;i<=getIndex(total_memory_length);i++){ 
-    cout<<getIndex(i)<<": "<<free_list.at(getIndex(i))->length;
+    cout<<i<<": "<<free_list.at(i)->length<<endl;
   }
 }
 
 
 //private
 char* BuddyAllocator::getbuddy (char *addr){
-  return (((uintptr_t)(addr - (char*)begin_ptr)) ^ (((BlockHeader*)addr)->size)) + ((char*)begin_ptr);
+  return ( ( (uintptr_t) (addr - ( ((char*)begin_ptr) ) ) ) ^ (((BlockHeader*)addr)->size))  + ((char*)begin_ptr);
 }
 
 bool BuddyAllocator::isvalid (char *addr){
@@ -160,39 +165,43 @@ bool BuddyAllocator::arebuddies (char *block1, char *block2){
 }
 
 char* BuddyAllocator::merge (char *block1, char *block2){
+  free_list.at(getIndex(((BlockHeader*)block1)->size))->remove((BlockHeader*)block1);
+  free_list.at(getIndex(((BlockHeader*)block2)->size))->remove((BlockHeader*)block2);
+
   char *newblock = nullptr;
   if(((BlockHeader*)block1)->free && ((BlockHeader*)block2)->free){
     if(block1<block2){
       ((BlockHeader*)block1)->size*=2;
-      free_list.at(getIndex(((BlockHeader*)block2)->size))->remove((BlockHeader*)block2);
       newblock = block1;
+      free_list.at(getIndex(((BlockHeader*)newblock)->size))->insert((BlockHeader*)newblock);
     }else{
       ((BlockHeader*)block2)->size*=2;
-      free_list.at(getIndex(((BlockHeader*)block1)->size))->remove((BlockHeader*)block1);
       newblock = block2;
+      free_list.at(getIndex(((BlockHeader*)newblock)->size))->insert((BlockHeader*)newblock);
     }
-    if(((BlockHeader*)getbuddy(newblock))->free){
-      merge(newblock,getbuddy(newblock));
+    if(((BlockHeader*)getbuddy(newblock))->free && ((BlockHeader*)newblock)->size < total_memory_length){
+      return merge(newblock,getbuddy(newblock));
     }else{
       return newblock;
     }
   }else{
-    if(((BlockHeader*)block1)->free){
-      return block1;
-    }else{
-      return block2;
-    }
+    throw 55;
   }
 }
 
 char* BuddyAllocator::split (char *block,uint size){
   uint cursize = ((BlockHeader*) block)->size;
   uint offset = cursize/2;
+  free_list.at(getIndex(cursize))->remove((BlockHeader*)block);
+  
+  // half the size and create new half sized block half way through
   ((BlockHeader*) block)->size = cursize/2;
+  ((BlockHeader*) block)->free = true;
   ((BlockHeader*) (block+offset))->size = cursize/2;
   ((BlockHeader*) (block+offset))->free = true;
-  cursize /= 2;
+  ((BlockHeader*) (block+offset))->next = nullptr;
   // offset here is the old size
+  // add both new blocks to free list and return correct thing
   free_list.at(getIndex(offset))->insert((BlockHeader*)block);
   free_list.at(getIndex(offset))->insert((BlockHeader*)(block+offset));
   if(cursize == size){ 
