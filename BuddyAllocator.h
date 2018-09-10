@@ -35,6 +35,7 @@ class BlockHeader{
   int size = 0;
   BlockHeader *next = nullptr;
   //BlockHeader *prev;
+  //TODO getter and setter for size if can't fix
 };
 
 class LinkedList{

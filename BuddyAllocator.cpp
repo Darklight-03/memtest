@@ -71,19 +71,15 @@ char* BuddyAllocator::alloc(uint _length) {
   */
 
   // find needed block size
-  uint size = nextPowerOfTwo(_length);
+  uint size = nextPowerOfTwo(_length+sizeof((BlockHeader*)begin_ptr));
   if(size < basic_block_size){
     size = basic_block_size;
   }
 
-  uint temp = basic_block_size;
-  while(temp < size+sizeof((BlockHeader*)begin_ptr)){
-    temp = temp << 1;
-  }
-  if(temp > total_memory_length){
+  if(size > total_memory_length){
+    cout<<"outofmemory"<<endl;
     return 0;
   }
-  size = temp;
   BlockHeader *memory = free_list.at(getIndex(size))->head;
 
   // if there is already a correctly sized block available just return it and
@@ -101,7 +97,6 @@ char* BuddyAllocator::alloc(uint _length) {
     while(basic_block_size << count <= total_memory_length){
       memory = free_list.at(count)->head;
       if(memory != nullptr){
-        //free_list.at(count)->remove(memory);
         memory = (BlockHeader*) split((char*)memory,size);
         memory -> free = false;
         free_list.at(getIndex(memory->size))->remove(memory);
@@ -109,12 +104,13 @@ char* BuddyAllocator::alloc(uint _length) {
       }
       count++;
     }
+    cout<<"outofmemory2"<<endl;
+    return 0;
   }
 
 
     
   return 0;
-  // return new char [_length];
 }
 
 int BuddyAllocator::free(char* _a) {
@@ -123,6 +119,9 @@ int BuddyAllocator::free(char* _a) {
   char* address = _a-sizeof((BlockHeader*)begin_ptr);
 
   uint size = ((BlockHeader*) address)->size;
+  if(size>total_memory_length){
+    cout<<"ERLWAGEA\n\n\n";
+  }
   free_list.at(getIndex(size))->insert((BlockHeader*) address);
   ((BlockHeader*)address)->free = true;
   if(((BlockHeader*)getbuddy(address))->free){
@@ -133,8 +132,6 @@ int BuddyAllocator::free(char* _a) {
   }
   return 0;
 
-  //delete _a;
-  //return 0;
 }
 
 void BuddyAllocator::debug (){
@@ -204,7 +201,7 @@ char* BuddyAllocator::split (char *block,uint size){
   // add both new blocks to free list and return correct thing
   free_list.at(getIndex(offset))->insert((BlockHeader*)block);
   free_list.at(getIndex(offset))->insert((BlockHeader*)(block+offset));
-  if(cursize == size){ 
+  if(offset == size){ 
     return (char*)block;
   }else{
     return split((char*)block,size);
