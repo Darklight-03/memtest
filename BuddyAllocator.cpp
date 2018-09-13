@@ -43,7 +43,9 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 }
 
 BuddyAllocator::~BuddyAllocator (){
-  free ((char*)begin_ptr);  
+  cout<<"destructor: ";
+  std::free (begin_ptr);
+  cout<<" ok!"<<endl; 
 }
 
 int BuddyAllocator::getIndex(uint size){
@@ -109,7 +111,7 @@ char* BuddyAllocator::alloc(uint _length) {
   }
 
 
-    
+  cout<<"outofmemory3"<<endl; 
   return 0;
 }
 

@@ -41,4 +41,5 @@ int main(int argc, char ** argv) {
   cout<<"tested!"<<endl;
   // destroy memory manager
   delete allocator;
+  exit(2);
 }
