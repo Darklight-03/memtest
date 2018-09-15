@@ -43,11 +43,11 @@ BuddyAllocator::BuddyAllocator (uint _basic_block_size, uint _total_memory_lengt
 }
 
 BuddyAllocator::~BuddyAllocator (){
-  cout<<"destructor: ";
   std::free (begin_ptr);
-  cout<<" ok!"<<endl; 
+  cout<<"exit ok!"<<endl; 
 }
 
+// returns the index at which the vector stores memory blocks of size
 int BuddyAllocator::getIndex(uint size){
   uint temp = size;
   int i = 0;
@@ -58,6 +58,7 @@ int BuddyAllocator::getIndex(uint size){
   return i;
 }
 
+// returns the next power of 2 after n
 uint nextPowerOfTwo (uint n){
   uint temp = 1;
   while(temp<n){
@@ -67,11 +68,6 @@ uint nextPowerOfTwo (uint n){
 }
 
 char* BuddyAllocator::alloc(uint _length) {
-  /* This preliminary implementation simply hands the call over the 
-     the C standard library! 
-     Of course this needs to be replaced by your implementation.
-  */
-
   // find needed block size
   uint size = nextPowerOfTwo(_length+sizeof((BlockHeader*)begin_ptr));
   if(size < basic_block_size){
@@ -121,9 +117,6 @@ int BuddyAllocator::free(char* _a) {
   char* address = _a-sizeof((BlockHeader*)begin_ptr);
 
   uint size = ((BlockHeader*) address)->size;
-  if(size>total_memory_length){
-    cout<<"ERLWAGEA\n\n\n";
-  }
   free_list.at(getIndex(size))->insert((BlockHeader*) address);
   ((BlockHeader*)address)->free = true;
   if(((BlockHeader*)getbuddy(address))->free){
@@ -136,6 +129,7 @@ int BuddyAllocator::free(char* _a) {
 
 }
 
+// prints number of blocks in every linked list
 void BuddyAllocator::debug (){
   for(int i = 0;i<=getIndex(total_memory_length);i++){ 
     cout<<i<<": "<<free_list.at(i)->length<<endl;
@@ -143,7 +137,7 @@ void BuddyAllocator::debug (){
 }
 
 
-//private
+// gets the buddy of addr
 char* BuddyAllocator::getbuddy (char *addr){
   return ( ( (uintptr_t) (addr - ( ((char*)begin_ptr) ) ) ) ^ (((BlockHeader*)addr)->size))  + ((char*)begin_ptr);
 }
@@ -164,11 +158,14 @@ bool BuddyAllocator::arebuddies (char *block1, char *block2){
 }
 
 char* BuddyAllocator::merge (char *block1, char *block2){
+  // removes the blocks to be merged from the free_list
   free_list.at(getIndex(((BlockHeader*)block1)->size))->remove((BlockHeader*)block1);
   free_list.at(getIndex(((BlockHeader*)block2)->size))->remove((BlockHeader*)block2);
 
   char *newblock = nullptr;
   if(((BlockHeader*)block1)->free && ((BlockHeader*)block2)->free){
+    // be sure to merge the left-most block into theh right one to avoid
+    // overwriting memory
     if(block1<block2){
       ((BlockHeader*)block1)->size*=2;
       newblock = block1;
@@ -178,12 +175,14 @@ char* BuddyAllocator::merge (char *block1, char *block2){
       newblock = block2;
       free_list.at(getIndex(((BlockHeader*)newblock)->size))->insert((BlockHeader*)newblock);
     }
+    // if the freshly merged block still has a free buddy merge more
     if(((BlockHeader*)getbuddy(newblock))->free && ((BlockHeader*)newblock)->size < total_memory_length){
       return merge(newblock,getbuddy(newblock));
     }else{
       return newblock;
     }
   }else{
+    // crash program if both blocks not free (should never happen)
     throw 55;
   }
 }
@@ -206,6 +205,7 @@ char* BuddyAllocator::split (char *block,uint size){
   if(offset == size){ 
     return (char*)block;
   }else{
+    // continue splitting till you have the correct size
     return split((char*)block,size);
   }
 

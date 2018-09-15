@@ -20,22 +20,10 @@ typedef unsigned int uint;
 /* declare types as you need */
 
 class BlockHeader{
-	// decide what goes here
-	// hint: obviously block size will go here
-  // bool Free;
-  // int size;
-  // BlockHeader *next
-  //
-  //Header *h = a
-  //h->Free = True;
-  //h->size = 512;
-  //h->next = 0;
   public:
   bool free = true;
   int size = 0;
   BlockHeader *next = nullptr;
-  //BlockHeader *prev;
-  //TODO getter and setter for size if can't fix
 };
 
 class LinkedList{
