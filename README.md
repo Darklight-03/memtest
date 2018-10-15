@@ -1,3 +1,3 @@
-# PA1313
+# memtest
 
 just run make then run memtest
